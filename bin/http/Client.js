@@ -9,12 +9,18 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
+const ParserHTML_1 = require("../parser/ParserHTML");
 const Request_1 = require("./Request");
-const requeset = new Request_1.Request({ host: "127.0.0.1", port: 8088, method: "GET" });
+const requeset = new Request_1.Request({
+    method: 'GET',
+    host: '127.0.0.1',
+    port: 8088,
+    path: '/',
+});
 function test() {
     return __awaiter(this, void 0, void 0, function* () {
         const response = yield requeset.send();
-        console.log(response);
+        const dom = (0, ParserHTML_1.parserHTML)(response.body);
     });
 }
 test();

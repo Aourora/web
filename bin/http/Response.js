@@ -7,7 +7,6 @@ const PARSE_STATUS = {
     WAITING_HEADER_NAME: 2,
     WAITING_HEADER_SPACE: 3,
     WAITING_HEADER_VALUE: 4,
-    // WAITING_HEADER_LINE_END: 5,
     WAITING_HEADER_BLOCK_END: 6,
     WAITING_BODY: 7,
     WAITING_LENGTH: 8,
@@ -20,10 +19,10 @@ const PARSE_STATUS = {
 class ResponseParser {
     constructor() {
         this.currenetStatus = PARSE_STATUS.WAITING_STATUS_LINE;
-        this.statusLine = "";
+        this.statusLine = '';
         this.headers = {};
-        this.headerName = "";
-        this.headerValue = "";
+        this.headerName = '';
+        this.headerValue = '';
         this.bodyParser = null;
     }
     get isFinished() {
@@ -32,10 +31,10 @@ class ResponseParser {
     get response() {
         const status = this.statusLine.match(/HTTP\/1.1\s([0-9]+)\s(\S+)/);
         return {
-            statusCode: status ? status[1] : "",
-            statusText: status ? status[2] : "",
+            statusCode: status ? status[1] : '',
+            statusText: status ? status[2] : '',
             headers: this.headers,
-            body: this.bodyParser.content.join(""),
+            body: this.bodyParser.content.join(''),
         };
     }
     receive(data) {
@@ -46,7 +45,7 @@ class ResponseParser {
     receiveChar(char) {
         var _a;
         if (this.currenetStatus === PARSE_STATUS.WAITING_STATUS_LINE) {
-            if (char !== "\r") {
+            if (char !== '\r') {
                 this.statusLine += char;
             }
             else {
@@ -54,18 +53,18 @@ class ResponseParser {
             }
         }
         else if (this.currenetStatus === PARSE_STATUS.WAITING_STATUS_LINE_END) {
-            if (char === "\n") {
+            if (char === '\n') {
                 this.currenetStatus = PARSE_STATUS.WAITING_HEADER_NAME;
             }
         }
         else if (this.currenetStatus === PARSE_STATUS.WAITING_HEADER_NAME) {
-            if (char === "\r") {
+            if (char === '\r') {
                 this.currenetStatus = PARSE_STATUS.WAITING_HEADER_BLOCK_END;
-                if (this.headers["Transfer-Encoding"] === "chunked") {
+                if (this.headers['Transfer-Encoding'] === 'chunked') {
                     this.bodyParser = new ChunkedBodyParser();
                 }
             }
-            else if (char === ":") {
+            else if (char === ':') {
                 this.currenetStatus = PARSE_STATUS.WAITING_HEADER_SPACE;
             }
             else {
@@ -73,23 +72,23 @@ class ResponseParser {
             }
         }
         else if (this.currenetStatus === PARSE_STATUS.WAITING_HEADER_SPACE) {
-            if (char === " ") {
+            if (char === ' ') {
                 this.currenetStatus = PARSE_STATUS.WAITING_HEADER_VALUE;
             }
         }
         else if (this.currenetStatus === PARSE_STATUS.WAITING_HEADER_VALUE) {
-            if (char !== "\r") {
+            if (char !== '\r') {
                 this.headerValue += char;
             }
             else {
                 this.currenetStatus = PARSE_STATUS.WAITING_STATUS_LINE_END;
                 this.headers[this.headerName] = this.headerValue;
-                this.headerName = "";
-                this.headerValue = "";
+                this.headerName = '';
+                this.headerValue = '';
             }
         }
         else if (this.currenetStatus === PARSE_STATUS.WAITING_HEADER_BLOCK_END) {
-            if (char === "\n") {
+            if (char === '\n') {
                 this.currenetStatus = PARSE_STATUS.WAITING_BODY;
             }
         }
@@ -108,7 +107,7 @@ class ChunkedBodyParser {
     }
     receiveChar(char) {
         if (this.currentState === PARSE_STATUS.WAITING_LENGTH) {
-            if (char === "\r") {
+            if (char === '\r') {
                 if (this.length === 0) {
                     this.isFinished = true;
                 }
@@ -122,7 +121,7 @@ class ChunkedBodyParser {
             }
         }
         else if (this.currentState === PARSE_STATUS.WAITING_LENGTH_LINE_END) {
-            if (char === "\n") {
+            if (char === '\n') {
                 this.currentState = PARSE_STATUS.READING_TRUNK;
             }
         }
@@ -134,12 +133,12 @@ class ChunkedBodyParser {
             }
         }
         else if (this.currentState === PARSE_STATUS.WAITING_NEW_LINE) {
-            if (char === "\r") {
+            if (char === '\r') {
                 this.currentState = PARSE_STATUS.WAITING_NEW_LINE_END;
             }
         }
         else if (this.currentState === PARSE_STATUS.WAITING_NEW_LINE_END) {
-            if (char === "\n") {
+            if (char === '\n') {
                 this.currentState = PARSE_STATUS.WAITING_LENGTH;
             }
         }

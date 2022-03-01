@@ -1,4 +1,4 @@
-type STATE = { [key: string]: number };
+type State = { [key: string]: number };
 
 export function match(s: string, p: string): boolean {
     const { length: M } = s;
@@ -25,9 +25,9 @@ export function match(s: string, p: string): boolean {
  * @param obj pattern中不重复的对象
  * @returns pattern状态机
  */
-function KMP(p: string, obj: { [key: string]: number }): STATE[] {
+function KMP(p: string, obj: { [key: string]: number }): State[] {
     const { length } = p;
-    const dfa: STATE[] = new Array(length).fill(0).map(() => {
+    const dfa: State[] = new Array(length).fill(0).map(() => {
         return { ...obj };
     });
     //第一次重启状态为0

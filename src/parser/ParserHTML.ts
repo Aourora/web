@@ -1,28 +1,15 @@
+import { Attribute, Node } from '../common/Common';
+import { layout } from '../layout/Layout';
 import { addCSSRules, computeCSS } from './ParserCSS';
 
 type State =
-    | ((char: string | Symbol) => State)
+    | ((char: string | symbol) => State)
     | ((char: string) => State | undefined);
 type Token = {
     type: string;
     tagName?: string;
     content?: string;
     [key: string]: string | boolean;
-};
-type Attribute = { name: string; value: any };
-
-export type Quad = [number, number, number, number];
-
-type Style = { value: string; specificity: Quad };
-
-export type Node = {
-    type: string;
-    tagName?: string;
-    content?: string;
-    computedStyle?: { [key: string]: Style };
-    parent: Node;
-    children: Node[];
-    attributes: Attribute[];
 };
 
 const EOF: symbol = Symbol('EOF'); //EOF: End Of File
@@ -36,16 +23,16 @@ const stack: Node[] = [
     { type: 'document', children: [], attributes: [], parent: null },
 ];
 
-export function parserHTML(html: string) {
+export function parserHTML(html: string): Node {
     let state: any = data;
     for (const char of html) {
-        state = state!(char);
+        state = state(char);
     }
-    state = state!(EOF);
+    state = state(EOF);
     return stack[0];
 }
 
-function emit(token: Token) {
+function emit(token: Token): void {
     const top = stack[stack.length - 1];
     if (token.type === 'startTag') {
         const element: Node = {
@@ -75,6 +62,8 @@ function emit(token: Token) {
                 //-*********添加CSSRules*********-//
                 addCSSRules(top.content);
             }
+            //-*********计算layout*********-//
+            layout(top);
             stack.pop();
         }
     } else if (token.type === 'text') {
@@ -85,7 +74,7 @@ function emit(token: Token) {
     }
 }
 
-function data(char: string | Symbol): State {
+function data(char: string | symbol): State {
     if (char === '<') {
         return tagOpen;
     } else if (char === EOF) {
@@ -116,7 +105,7 @@ function tagOpen(char: string): State {
     }
 }
 
-function endTagOpen(char: string | Symbol): State {
+function endTagOpen(char: string | symbol): State {
     if (typeof char === 'string' && char.match(/^[a-zA-Z]$/)) {
         currentToken = {
             type: 'endTag',
@@ -148,7 +137,7 @@ function tagName(char: string): State {
     }
 }
 
-function beforeAttributeName(char: string | Symbol): State {
+function beforeAttributeName(char: string | symbol): State {
     if (typeof char === 'string' && char.match(BLANK)) {
         return beforeAttributeName;
     } else if (char === '/' || char === '>' || char === EOF) {
@@ -161,10 +150,10 @@ function beforeAttributeName(char: string | Symbol): State {
     }
 }
 
-function beforeAttributeValue(char: string | Symbol): State {
+function beforeAttributeValue(char: string | symbol): State {
     if (
-        char instanceof Symbol ||
-        char.match(BLANK) ||
+        char === EOF ||
+        (char as string).match(BLANK) ||
         char === '/' ||
         char === '>'
     ) {
@@ -173,17 +162,15 @@ function beforeAttributeValue(char: string | Symbol): State {
         return doubleQuotedAttributeValue;
     } else if (char === "'") {
         return singleQuotedAttributeValue;
-    } else if (char === '>') {
-        ///!
     } else {
         return UnquotedAttributeValue(char);
     }
 }
 
-function attributeName(char: string | Symbol): State {
+function attributeName(char: string | symbol): State {
     if (
-        char instanceof Symbol ||
-        char.match(BLANK) ||
+        char === EOF ||
+        (char as string).match(BLANK) ||
         char === '/' ||
         char === '>'
     ) {
@@ -195,12 +182,12 @@ function attributeName(char: string | Symbol): State {
     } else if (char === '"' || char === "'" || char === '<') {
         //
     } else {
-        currentAttribute.name += char;
+        currentAttribute.name += char as string;
         return attributeName;
     }
 }
 
-function afterAttributeName(char: string | Symbol): State {
+function afterAttributeName(char: string | symbol): State {
     if (typeof char === 'string' && char.match(BLANK)) {
         return afterAttributeName;
     } else if (char === '/') {
@@ -232,7 +219,7 @@ function selfClosingStartTag(char: string): State {
     }
 }
 
-function doubleQuotedAttributeValue(char: string | Symbol): State {
+function doubleQuotedAttributeValue(char: string | symbol): State {
     if (char === '"') {
         currentToken[currentAttribute.name] = currentAttribute.value;
         return afterQuotedAttributeValue;
@@ -241,12 +228,12 @@ function doubleQuotedAttributeValue(char: string | Symbol): State {
     } else if (char === EOF) {
         //
     } else {
-        currentAttribute.value += char;
+        currentAttribute.value += char as string;
         return doubleQuotedAttributeValue;
     }
 }
 
-function singleQuotedAttributeValue(char: string | Symbol): State {
+function singleQuotedAttributeValue(char: string | symbol): State {
     if (char === "'") {
         currentToken[currentAttribute.name] = currentAttribute.value;
         return afterQuotedAttributeValue;
@@ -255,12 +242,12 @@ function singleQuotedAttributeValue(char: string | Symbol): State {
     } else if (char === EOF) {
         //
     } else {
-        currentAttribute.value += char;
+        currentAttribute.value += char as string;
         return singleQuotedAttributeValue;
     }
 }
 
-function afterQuotedAttributeValue(char: string | Symbol): State {
+function afterQuotedAttributeValue(char: string | symbol): State {
     if (typeof char === 'string' && char.match(BLANK)) {
         return beforeAttributeName;
     } else if (char === '/') {
@@ -271,13 +258,14 @@ function afterQuotedAttributeValue(char: string | Symbol): State {
     } else if (char === EOF) {
         //
     } else {
+        //
     }
 }
 
-function UnquotedAttributeValue(char: string | Symbol): State {
-    if (char instanceof Symbol) {
+function UnquotedAttributeValue(char: string | symbol): State {
+    if (char === EOF) {
         //
-    } else if (char.match(BLANK)) {
+    } else if ((char as string).match(BLANK)) {
         currentToken[currentAttribute.name] = currentAttribute.value;
         return beforeAttributeName;
     } else if (char === '/') {
@@ -290,8 +278,9 @@ function UnquotedAttributeValue(char: string | Symbol): State {
     } else if (char === U_S) {
         //
     } else if (char === '"' || char === '<' || char === '=' || char === '`') {
+        //
     } else {
-        currentAttribute.value += char;
+        currentAttribute.value += char as string;
         return UnquotedAttributeValue;
     }
 }

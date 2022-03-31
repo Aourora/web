@@ -8,7 +8,7 @@ const requeset = new Request({
     path: '/',
 });
 
-async function test() {
+async function test(): Promise<void> {
     const response = await requeset.send();
     const dom = parserHTML(response.body);
     console.log(JSON.stringify(dom, null, '   '));

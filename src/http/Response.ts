@@ -1,3 +1,5 @@
+import { ResponseData } from '../common/Common';
+
 const PARSE_STATUS = {
     WAITING_STATUS_LINE: 0,
     WAITING_STATUS_LINE_END: 1,
@@ -14,13 +16,6 @@ const PARSE_STATUS = {
     WAITING_NEW_LINE_END: 12,
     READING_TRUNK_END: 13,
 };
-
-export interface ResponseData {
-    statusCode: string;
-    statusText: string;
-    headers: Object;
-    body: string;
-}
 
 export class ResponseParser {
     protected currenetStatus: number = PARSE_STATUS.WAITING_STATUS_LINE;
@@ -40,17 +35,17 @@ export class ResponseParser {
             statusCode: status ? status[1] : '',
             statusText: status ? status[2] : '',
             headers: this.headers,
-            body: this.bodyParser!.content.join(''),
+            body: this.bodyParser?.content.join(''),
         };
     }
 
-    public receive(data: string) {
+    public receive(data: string): void {
         for (let i = 0, { length } = data; i < length; ++i) {
             this.receiveChar(data.charAt(i));
         }
     }
 
-    public receiveChar(char: string) {
+    public receiveChar(char: string): void {
         if (this.currenetStatus === PARSE_STATUS.WAITING_STATUS_LINE) {
             if (char !== '\r') {
                 this.statusLine += char;
@@ -104,7 +99,7 @@ class ChunkedBodyParser {
     public content: string[] = [];
     protected currentState: number = PARSE_STATUS.WAITING_LENGTH;
     public isFinished: boolean = false;
-    public receiveChar(char: string) {
+    public receiveChar(char: string): void {
         if (this.currentState === PARSE_STATUS.WAITING_LENGTH) {
             if (char === '\r') {
                 if (this.length === 0) {

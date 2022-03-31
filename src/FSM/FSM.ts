@@ -30,7 +30,7 @@ function findB(char: string): State {
     return start(char);
 }
 
-function end(char: string): State {
+function end(): State {
     return end;
 }
 

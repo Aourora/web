@@ -1,5 +1,6 @@
 import Net from 'net';
-import { ResponseData, ResponseParser } from './Response';
+import { ResponseData } from '../common/Common';
+import { ResponseParser } from './Response';
 
 interface Options {
     method?: 'GET' | 'POST' | 'OPTIONS' | 'PUT' | 'DELETE' | 'HEAD' | 'PATCH';
@@ -64,7 +65,7 @@ ${this.bodyText}`;
                         port: this.port,
                     },
                     () => {
-                        connection!.write(this.toString());
+                        connection?.write(this.toString());
                     }
                 );
             }
@@ -74,13 +75,13 @@ ${this.bodyText}`;
                 parser.receive(data.toString());
                 if (parser.isFinished) {
                     resolve(parser.response);
-                    connection!.end();
+                    connection?.end();
                 }
             });
 
             connection.on('error', (err) => {
                 reject(err);
-                connection!.end();
+                connection?.end();
             });
         });
     }

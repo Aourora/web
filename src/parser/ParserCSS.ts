@@ -1,9 +1,13 @@
 import css, { Declaration, Rule } from 'css';
-
-import { Node, Quad } from './ParserHTML';
+import { Quad, Node } from '../common/Common';
 
 const rules: Rule[] = [];
 
+/**
+ * 计算选择器优先级
+ * @param selector
+ * @returns
+ */
 function specificity(selector: string): Quad {
     const result: Quad = [0, 0, 0, 0];
     const parts = selector.split(' ');
@@ -19,6 +23,12 @@ function specificity(selector: string): Quad {
     return result;
 }
 
+/**
+ * 比较选择器优先级大小
+ * @param sp1
+ * @param sp2
+ * @returns
+ */
 function compare(sp1: Quad, sp2: Quad): boolean {
     for (let i = 0; i < 4; ++i) {
         if (sp1[i] - sp2[i]) {
@@ -27,16 +37,20 @@ function compare(sp1: Quad, sp2: Quad): boolean {
     }
 }
 
+/**
+ * 添加CSS规则
+ * @param content
+ */
 export function addCSSRules(content: string): void {
     const ast = css.parse(content);
     rules.push(...ast.stylesheet.rules);
 }
 
+/**
+ * 计算元素CSS
+ * @param element 元素
+ */
 export function computeCSS(element: Node): void {
-    if (!element.computedStyle) {
-        element.computedStyle = {};
-    }
-
     for (const rule of rules) {
         const selectorsParts = rule.selectors[0].split(' ').reverse();
         if (!match(element, selectorsParts[0])) {
@@ -51,6 +65,10 @@ export function computeCSS(element: Node): void {
             parent = parent.parent;
         }
         if (i >= selectorsParts.length) {
+            if (!element.computedStyle) {
+                element.computedStyle = {};
+            }
+
             const { computedStyle } = element;
             const sp = specificity(rule.selectors[0]);
             for (const declaration of rule.declarations as Declaration[]) {
@@ -65,19 +83,26 @@ export function computeCSS(element: Node): void {
     }
 }
 
-function match(element: Node, selector: string): boolean {
-    if (selector.charAt(0) === '#') {
+/**
+ * 检测元素是否包含当前selectorPart
+ * @param element
+ * @param selectorPart
+ * @returns
+ */
+function match(element: Node, selectorPart: string): boolean {
+    if (selectorPart.charAt(0) === '#') {
         return !!element.attributes.find(
             (attr) =>
-                attr.name === 'id' && attr.value === selector.replace('#', '')
+                attr.name === 'id' &&
+                attr.value === selectorPart.replace('#', '')
         );
-    } else if (selector.charAt(0) === '.') {
+    } else if (selectorPart.charAt(0) === '.') {
         return !!element.attributes.find(
             (attr) =>
                 attr.name === 'class' &&
-                attr.value === selector.replace('.', '')
+                attr.value === selectorPart.replace('.', '')
         );
-    } else if (element.tagName === selector) {
+    } else if (element.tagName === selectorPart) {
         return true;
     }
     return false;
